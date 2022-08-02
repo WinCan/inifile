@@ -1,6 +1,7 @@
 #include "inifile/ini.h"
 #include <fstream>
 #include <algorithm>
+#include <codecvt>
 
 namespace inifile {
 template <typename T>
@@ -35,25 +36,25 @@ file<CharT>::~file()
 }
 
 template<typename CharT>
-const file<CharT>::Groups& file<CharT>::groups() const
+const typename file<CharT>::Groups& file<CharT>::groups() const
 {
     return _structure;
 }
 
 template<typename CharT>
-file<CharT>::Groups& file<CharT>::groups()
+typename file<CharT>::Groups& file<CharT>::groups()
 {
     return _structure;
 }
 
 template<typename CharT>
-file<CharT>::Values& file<CharT>::group(StrViewType str)
+typename file<CharT>::Values& file<CharT>::group(StrViewType str)
 {
     return _structure[view_to_string(str)];
 }
 
 template<typename CharT>
-const file<CharT>::Values& file<CharT>::group(StrViewType str) const
+const typename file<CharT>::Values& file<CharT>::group(StrViewType str) const
 {
     if (str.empty() || !map_contains(_structure, str))
     {
@@ -95,7 +96,7 @@ void file<CharT>::add(const Values &values)
 }
 
 template<typename CharT>
-const file<CharT>::Values& file<CharT>::values() const
+const typename file<CharT>::Values& file<CharT>::values() const
 {
     if (_currentGroup.empty() || !_structure.contains(_currentGroup))
     {
@@ -106,13 +107,13 @@ const file<CharT>::Values& file<CharT>::values() const
 }
 
 template<typename CharT>
-file<CharT>::Values& file<CharT>::values()
+typename file<CharT>::Values& file<CharT>::values()
 {
     return _structure[_currentGroup];
 }
 
 template<typename CharT>
-const file<CharT>::StrType& file<CharT>::value(StrViewType str) const
+const typename file<CharT>::StrType& file<CharT>::value(StrViewType str) const
 {
     auto groupName = _currentGroup.empty() ? groupFromKey(str) : _currentGroup;
     if (groupName.empty() || !map_contains(_structure, groupName))
@@ -125,7 +126,7 @@ const file<CharT>::StrType& file<CharT>::value(StrViewType str) const
 }
 
 template<typename CharT>
-file<CharT>::StrType& file<CharT>::value(StrViewType str)
+typename file<CharT>::StrType& file<CharT>::value(StrViewType str)
 {
     auto groupName = _currentGroup.empty() ? view_to_string(groupFromKey(str)) : _currentGroup;
     auto name = view_to_string(_currentGroup.empty() ? nameFromKey(str) : str);
@@ -146,7 +147,7 @@ void file<CharT>::endGroup()
 }
 
 template<typename CharT>
-file<CharT>::StrViewType file<CharT>::groupFromKey(StrViewType str)
+typename file<CharT>::StrViewType file<CharT>::groupFromKey(StrViewType str)
 {
     auto it = str.find(CharType('.'));
     if (it == StrType::npos)
@@ -155,7 +156,7 @@ file<CharT>::StrViewType file<CharT>::groupFromKey(StrViewType str)
 }
 
 template<typename CharT>
-file<CharT>::StrViewType file<CharT>::nameFromKey(StrViewType str)
+typename file<CharT>::StrViewType file<CharT>::nameFromKey(StrViewType str)
 {
     auto it = str.find(CharType('.'));
     if (it == StrType::npos)
@@ -213,7 +214,7 @@ bool file<CharT>::write()
 }
 
 template<typename CharT>
-file<CharT>::Values& file<CharT>::operator[](StrViewType key)
+typename file<CharT>::Values& file<CharT>::operator[](StrViewType key)
 {
     return group(key);
 }
