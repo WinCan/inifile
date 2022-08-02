@@ -5,13 +5,6 @@
 #include <vector>
 
 namespace inifile{
-    using CharType = std::filesystem::path::value_type;
-    using StrType = std::filesystem::path::string_type;
-    using StrViewType = std::basic_string_view<std::filesystem::path::value_type>;
-
-    using Values = std::map<StrType, StrType>;
-    using Groups = std::map<StrType, Values>;
-
     enum class ValueType
     {
         Group,
@@ -20,6 +13,7 @@ namespace inifile{
         Unknown
     };
     
+    template<typename StrViewType>
     struct ParsedValue
     {
         ValueType type = ValueType::Unknown;
@@ -27,12 +21,19 @@ namespace inifile{
         StrViewType value;
     };
 
+    template<typename CharT=char>
     class file
     {
+        using CharType = CharT;
+        using StrType = std::basic_string<CharType>;
+        using StrViewType = std::basic_string_view<CharType>;
+        using Values = std::map<StrType, StrType>;
+        using Groups = std::map<StrType, Values>;
+
         public:
             file(const CharType* str);
             file(const StrType& str);
-            virtual ~file() = default;
+            virtual ~file();
             
             const Groups& groups() const;
             Groups& groups();
@@ -40,6 +41,7 @@ namespace inifile{
             const Values& group(StrViewType str) const;
             std::vector<StrType> groupNames() const;
             bool contains(StrViewType str) const;
+            void add(const Values& values);
             
             const Values& values() const;
             Values& values();
@@ -53,15 +55,19 @@ namespace inifile{
             bool write();
 
             Values& operator[](StrViewType key);
+            void setWriteOnClose(bool val);
 
         private:
+            file::Values EMPTY_GROUP;
+            file::StrType EMPTY_VALUE;
             static StrViewType groupFromKey(StrViewType str);
             static StrViewType nameFromKey(StrViewType str);
         
-            ParsedValue parseLine(StrViewType line);
+            ParsedValue<StrViewType> parseLine(StrViewType line);
             static void trim(StrViewType& value);
             std::filesystem::path _path;
             StrType _currentGroup;
             Groups _structure;
+            bool _writeOnClose = true;
     };
 }
