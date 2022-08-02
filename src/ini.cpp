@@ -166,7 +166,7 @@ bool file::read()
 bool file::write()
 {
     _currentGroup.clear();
-    std::ofstream file(_path.c_str());
+    std::basic_ofstream<CharType> file(_path.c_str());
     if (!file.is_open())
         return false;
     for (auto gIt = _structure.cbegin(); gIt != _structure.cend(); ++gIt)
