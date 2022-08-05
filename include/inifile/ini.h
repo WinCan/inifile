@@ -31,8 +31,7 @@ namespace inifile{
         using Groups = std::map<StrType, Values>;
 
         public:
-            file(const CharType* str);
-            file(const StrType& str);
+            file(const std::filesystem::path& str);
             virtual ~file();
             
             const Groups& groups() const;

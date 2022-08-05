@@ -19,12 +19,7 @@ bool map_contains(const std::map<std::basic_string<T>, V>& map, std::basic_strin
 }
 
 template<typename CharT>
-file<CharT>::file(const CharType* str)
-    : _path(str)
-{}
-
-template<typename CharT>
-file<CharT>::file(const StrType& str)
+file<CharT>::file(const std::filesystem::path& str)
     : _path(str)
 {}
 

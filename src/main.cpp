@@ -26,7 +26,7 @@ int main()
 #endif
     {
         // inifile::file<char>
-        inifile::file f(std::filesystem::path("file.conf").string().c_str());
+        inifile::file<char> f(std::filesystem::path("file.conf"));
         // Add value to group
         f.beginGroup("MyGroupąą");
         f.value("Jakąś") = "Kóźnia";
@@ -43,7 +43,7 @@ int main()
     }
     {
         // inifile::file<char>
-        inifile::file f(std::filesystem::path("file.conf").string().c_str());
+        inifile::file f(std::filesystem::path("file.conf"));
         // explicit load
         assert(f.read());
         // Value in group
