@@ -1,7 +1,9 @@
 #include "inifile/ini.h"
-#include <fstream>
 #include <algorithm>
 #include <codecvt>
+#include <fstream>
+#include <string>
+#include <string_view>
 
 namespace inifile {
 template <typename T>
