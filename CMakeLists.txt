@@ -13,7 +13,7 @@ set(SOURCES
 option(INI_BUILD_TEST "Build inifile test" OFF)
 
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 option(USE_NARROW_ONLY "Do not use wchar_t on Windows" OFF)
 target_compile_definitions(${PROJECT_NAME} PUBLIC $<IF:$<BOOL:${USE_NARROW_ONLY}>,USE_NARROW_ONLY,>)
