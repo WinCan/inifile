@@ -14,9 +14,10 @@ int main()
 #if (defined(_WIN32) && !defined(USE_NARROW_ONLY))
     {
         // Handle read/write operations and pass them to file
-        FileIOHandler<wchar_t> handler(std::filesystem::path("file.conf"));
+        // FileIOHandler<wchar_t> handler(std::filesystem::path("file.conf"));
+        inifile::StringsIOHandler<wchar_t> wide_handler(32, inifile::FlowDirection::Out);
         // inifile::file<wchar_t>
-        inifile::file<wchar_t> f(&handler);
+        inifile::file<wchar_t> f(&wide_handler);
         // Add value to group
         f.beginGroup(L"MyGroupąą");
         f.value(L"Jakąś") = L"Kóźnia";
