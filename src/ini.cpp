@@ -199,11 +199,12 @@ bool file<CharT>::read(IOHandler<CharType>* handler)
     return true;
 }
 
-std::string get_string(std::ostringstream& stream)
+template <typename CharT, typename StringT = std::basic_string<CharT>>
+StringT get_string(std::basic_ostringstream<CharT>& stream)
 {
     auto str = stream.str();
     stream.clear();
-    stream.str(std::string());
+    stream.str(StringT());
     return str;
 }
 
@@ -217,7 +218,7 @@ bool file<CharT>::write(IOHandler<CharType>* handler)
     if (handler == nullptr)
         handler = _handler;
 
-    std::ostringstream stream;
+    std::basic_ostringstream<CharType> stream;
     if constexpr (!std::is_same_v<CharType, char>)
         stream.imbue(std::locale(std::locale::classic(), new std::codecvt_utf8<CharType>));
     for (auto gIt = _structure.cbegin(); gIt != _structure.cend(); ++gIt)
