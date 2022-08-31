@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <codecvt>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -15,42 +16,46 @@ std::basic_string<T> view_to_string(std::basic_string_view<T> sv)
 template <typename T, typename V>
 bool map_contains(const std::map<std::basic_string<T>, V>& map, std::basic_string_view<T> sv)
 {
-    return std::find_if(map.cbegin(), map.cend(), [sv](auto it){
-        return it.first == sv;
-    }) != map.end();
+    return std::find_if(map.cbegin(), map.cend(), [sv](auto it) { return it.first == sv; }) != map.end();
 }
 
-template<typename CharT>
-file<CharT>::file(const std::filesystem::path& str)
-    : _path(str)
+template <typename CharT>
+file<CharT>::file(IOHandler<CharT>* handler)
+    : _handler(handler)
 {}
 
-template<typename CharT>
+template <typename CharT>
 file<CharT>::~file()
 {
-    if(_writeOnClose)
-        file<CharT>::write();
+    if (_writeOnClose && _handler)
+        file<CharT>::write(_handler);
 }
 
-template<typename CharT>
+template <typename CharT>
+void file<CharT>::setIOHandler(IOHandler<CharType>* handler)
+{
+    _handler = handler;
+}
+
+template <typename CharT>
 const typename file<CharT>::Groups& file<CharT>::groups() const
 {
     return _structure;
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::Groups& file<CharT>::groups()
 {
     return _structure;
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::Values& file<CharT>::group(StrViewType str)
 {
     return _structure[view_to_string(str)];
 }
 
-template<typename CharT>
+template <typename CharT>
 const typename file<CharT>::Values& file<CharT>::group(StrViewType str) const
 {
     if (str.empty() || !map_contains(_structure, str))
@@ -61,7 +66,7 @@ const typename file<CharT>::Values& file<CharT>::group(StrViewType str) const
     return _structure.at(_currentGroup);
 }
 
-template<typename CharT>
+template <typename CharT>
 std::vector<typename file<CharT>::StrType> file<CharT>::groupNames() const
 {
     std::vector<StrType> names(_structure.size());
@@ -70,14 +75,14 @@ std::vector<typename file<CharT>::StrType> file<CharT>::groupNames() const
     return names;
 }
 
-template<typename CharT>
+template <typename CharT>
 bool file<CharT>::contains(StrViewType str) const
 {
     if (!_currentGroup.empty() && !_structure.contains(_currentGroup))
         return false;
     auto groupName = _currentGroup.empty() ? groupFromKey(str) : _currentGroup;
     auto name = _currentGroup.empty() ? nameFromKey(str) : str;
-    if(groupName.empty() || !map_contains(_structure, groupName))
+    if (groupName.empty() || !map_contains(_structure, groupName))
         return false;
     if (name.empty())
         return true;
@@ -85,14 +90,14 @@ bool file<CharT>::contains(StrViewType str) const
     return map_contains(group, name);
 }
 
-template<typename CharT>
-void file<CharT>::add(const Values &values)
+template <typename CharT>
+void file<CharT>::add(const Values& values)
 {
-    for(auto it = values.cbegin() ; it != values.cend() ; ++it)
+    for (auto it = values.cbegin(); it != values.cend(); ++it)
         value(it->first) = it->second;
 }
 
-template<typename CharT>
+template <typename CharT>
 const typename file<CharT>::Values& file<CharT>::values() const
 {
     if (_currentGroup.empty() || !_structure.contains(_currentGroup))
@@ -103,13 +108,13 @@ const typename file<CharT>::Values& file<CharT>::values() const
     return _structure.at(_currentGroup);
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::Values& file<CharT>::values()
 {
     return _structure[_currentGroup];
 }
 
-template<typename CharT>
+template <typename CharT>
 const typename file<CharT>::StrType& file<CharT>::value(StrViewType str) const
 {
     auto groupName = _currentGroup.empty() ? groupFromKey(str) : _currentGroup;
@@ -122,7 +127,7 @@ const typename file<CharT>::StrType& file<CharT>::value(StrViewType str) const
     return group.at(view_to_string(name));
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::StrType& file<CharT>::value(StrViewType str)
 {
     auto groupName = _currentGroup.empty() ? view_to_string(groupFromKey(str)) : _currentGroup;
@@ -131,19 +136,19 @@ typename file<CharT>::StrType& file<CharT>::value(StrViewType str)
     return group[name];
 }
 
-template<typename CharT>
+template <typename CharT>
 void file<CharT>::beginGroup(StrViewType str)
 {
     _currentGroup = str;
 }
 
-template<typename CharT>
+template <typename CharT>
 void file<CharT>::endGroup()
 {
     _currentGroup.clear();
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::StrViewType file<CharT>::groupFromKey(StrViewType str)
 {
     auto it = str.find(CharType('.'));
@@ -152,7 +157,7 @@ typename file<CharT>::StrViewType file<CharT>::groupFromKey(StrViewType str)
     return str.substr(0, it);
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::StrViewType file<CharT>::nameFromKey(StrViewType str)
 {
     auto it = str.find(CharType('.'));
@@ -161,17 +166,20 @@ typename file<CharT>::StrViewType file<CharT>::nameFromKey(StrViewType str)
     return str.substr(it + 1, StrType::npos);
 }
 
-template<typename CharT>
-bool file<CharT>::read()
+template <typename CharT>
+bool file<CharT>::read(IOHandler<CharType>* handler)
 {
     _structure.clear();
     _currentGroup.clear();
-    std::basic_ifstream<CharType> file(_path.c_str());
-    if (!file.is_open())
+
+    if (handler == nullptr && _handler == nullptr)
         return false;
+    if (handler == nullptr)
+        handler = _handler;
+
     StrType line;
     Values* vals = nullptr;
-    while (std::getline(file, line))
+    while (handler->read_line(line))
     {
         auto keyVal = parseLine(line);
         if (keyVal.type == ValueType::Comment || keyVal.type == ValueType::Unknown)
@@ -188,41 +196,58 @@ bool file<CharT>::read()
 
         (*vals)[view_to_string(keyVal.key)] = view_to_string(keyVal.value);
     }
-    file.close();
     return true;
 }
 
-template<typename CharT>
-bool file<CharT>::write()
+std::string get_string(std::ostringstream& stream)
+{
+    auto str = stream.str();
+    stream.clear();
+    stream.str(std::string());
+    return str;
+}
+
+template <typename CharT>
+bool file<CharT>::write(IOHandler<CharType>* handler)
 {
     _currentGroup.clear();
-    std::basic_ofstream<CharType> file(_path.c_str(), std::ios_base::out);
-    if (!file.is_open())
+
+    if (handler == nullptr && _handler == nullptr)
         return false;
-    if constexpr(!std::is_same_v<CharType, char>)
-        file.imbue(std::locale(std::locale::classic(), new std::codecvt_utf8<CharType>));
+    if (handler == nullptr)
+        handler = _handler;
+
+    std::ostringstream stream;
+    if constexpr (!std::is_same_v<CharType, char>)
+        stream.imbue(std::locale(std::locale::classic(), new std::codecvt_utf8<CharType>));
     for (auto gIt = _structure.cbegin(); gIt != _structure.cend(); ++gIt)
     {
-        file << '[' << gIt->first << ']' << '\n';
+        stream << '[' << gIt->first << ']';
+        if(!handler->write_line(get_string(stream)))
+            return false;
         for (auto vIt = gIt->second.cbegin(); vIt != gIt->second.cend(); ++vIt)
-            file << vIt->first << '=' << vIt->second << '\n';
+        {
+            stream << vIt->first << '=' << vIt->second;
+            if(!handler->write_line(get_string(stream)))
+                return false;
+        }
     }
     return true;
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::Values& file<CharT>::operator[](StrViewType key)
 {
     return group(key);
 }
 
-template<typename CharT>
+template <typename CharT>
 void file<CharT>::setWriteOnClose(bool val)
 {
     _writeOnClose = val;
 }
 
-template<typename CharT>
+template <typename CharT>
 ParsedValue<typename file<CharT>::StrViewType> file<CharT>::parseLine(StrViewType line)
 {
     // naive, no trimming for group and comment lines
@@ -240,14 +265,14 @@ ParsedValue<typename file<CharT>::StrViewType> file<CharT>::parseLine(StrViewTyp
     return {ValueType::Value, key, value};
 }
 
-template<typename CharT>
-void file<CharT>::trim(StrViewType &value)
+template <typename CharT>
+void file<CharT>::trim(StrViewType& value)
 {
     auto len = value.length();
     auto start = 0;
-    if(value.ends_with(CharType('"')))
+    if (value.ends_with(CharType('"')))
         --len;
-    if(value.starts_with(CharType('"')))
+    if (value.starts_with(CharType('"')))
     {
         --len;
         start = 1;

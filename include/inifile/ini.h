@@ -1,72 +1,89 @@
 #pragma once
 
-#include <filesystem>
 #include <map>
+#include <string>
 #include <vector>
 
-namespace inifile{
-    enum class ValueType
-    {
-        Group,
-        Comment,
-        Value,
-        Unknown
-    };
-    
-    template<typename StrViewType>
-    struct ParsedValue
-    {
-        ValueType type = ValueType::Unknown;
-        StrViewType key;
-        StrViewType value;
-    };
+namespace inifile {
+template <typename CharType>
+struct IOHandler
+{
+    typedef typename std::basic_string<CharType> StrType;
+    typedef typename std::basic_string_view<CharType> StrViewType;
+    virtual bool read_line(StrType& line) = 0;
+    virtual bool write_line(StrViewType line) = 0;
+    virtual ~IOHandler() = default;
+};
 
-    template<typename CharT=char>
-    class file
-    {
-        using CharType = CharT;
-        using StrType = std::basic_string<CharType>;
-        using StrViewType = std::basic_string_view<CharType>;
-        using Values = std::map<StrType, StrType>;
-        using Groups = std::map<StrType, Values>;
+enum class ValueType
+{
+    Group,
+    Comment,
+    Value,
+    Unknown
+};
 
-        public:
-            file(const std::filesystem::path& str);
-            virtual ~file();
-            
-            const Groups& groups() const;
-            Groups& groups();
-            Values& group(StrViewType str);
-            const Values& group(StrViewType str) const;
-            std::vector<StrType> groupNames() const;
-            bool contains(StrViewType str) const;
-            void add(const Values& values);
-            
-            const Values& values() const;
-            Values& values();
-            const StrType& value(StrViewType str) const;
-            StrType& value(StrViewType str);
-            
-            void beginGroup(StrViewType str);
-            void endGroup();
-            
-            bool read();
-            bool write();
+enum class FlowDirection{
+    In,
+    Out,
+};
 
-            Values& operator[](StrViewType key);
-            void setWriteOnClose(bool val);
+template <typename StrViewType>
+struct ParsedValue
+{
+    ValueType type = ValueType::Unknown;
+    StrViewType key;
+    StrViewType value;
+};
 
-        private:
-            file::Values EMPTY_GROUP;
-            file::StrType EMPTY_VALUE;
-            static StrViewType groupFromKey(StrViewType str);
-            static StrViewType nameFromKey(StrViewType str);
-        
-            ParsedValue<StrViewType> parseLine(StrViewType line);
-            static void trim(StrViewType& value);
-            std::filesystem::path _path;
-            StrType _currentGroup;
-            Groups _structure;
-            bool _writeOnClose = true;
-    };
-}
+template <typename CharT = char>
+class file
+{
+    using CharType = CharT;
+    using StrType = std::basic_string<CharType>;
+    using StrViewType = std::basic_string_view<CharType>;
+    using Values = std::map<StrType, StrType>;
+    using Groups = std::map<StrType, Values>;
+
+public:
+    file(IOHandler<CharT>* handler = nullptr);
+    virtual ~file();
+
+    void setIOHandler(IOHandler<CharType>* handler);
+
+    const Groups& groups() const;
+    Groups& groups();
+    Values& group(StrViewType str);
+    const Values& group(StrViewType str) const;
+    std::vector<StrType> groupNames() const;
+    bool contains(StrViewType str) const;
+    void add(const Values& values);
+
+    const Values& values() const;
+    Values& values();
+    const StrType& value(StrViewType str) const;
+    StrType& value(StrViewType str);
+
+    void beginGroup(StrViewType str);
+    void endGroup();
+
+    bool read(IOHandler<CharType>* handler = nullptr);
+    bool write(IOHandler<CharType>* handler = nullptr);
+
+    Values& operator[](StrViewType key);
+    void setWriteOnClose(bool val);
+
+private:
+    file::Values EMPTY_GROUP;
+    file::StrType EMPTY_VALUE;
+    static StrViewType groupFromKey(StrViewType str);
+    static StrViewType nameFromKey(StrViewType str);
+
+    ParsedValue<StrViewType> parseLine(StrViewType line);
+    static void trim(StrViewType& value);
+    StrType _currentGroup;
+    Groups _structure;
+    IOHandler<CharType>* _handler = nullptr;
+    bool _writeOnClose = true;
+};
+} // namespace inifile

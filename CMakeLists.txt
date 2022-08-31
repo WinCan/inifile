@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.15)
 project(inifile)
 
 set(HEADERS
+    include/inifile/file_handler.h
     include/inifile/ini.h
+    include/inifile/strings_handler.h
 )
 
 set(SOURCES

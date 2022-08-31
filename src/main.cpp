@@ -1,14 +1,22 @@
+#include "inifile/file_handler.h"
+#include "inifile/strings_handler.h"
 #include "inifile/ini.h"
 
 #include <cassert>
+
 
 // Example use and test cases
 
 int main()
 {
+    // Handle read/write operations for a string vector interface
+    inifile::StringsIOHandler<char> handler(32, inifile::FlowDirection::Out);
 #if (defined(_WIN32) && !defined(USE_NARROW_ONLY))
     {
-        inifile::file<wchar_t> f(std::filesystem::path("file_win.conf").c_str());
+        // Handle read/write operations and pass them to file
+        FileIOHandler<wchar_t> handler(std::filesystem::path("file.conf"));
+        // inifile::file<wchar_t>
+        inifile::file<wchar_t> f(&handler);
         // Add value to group
         f.beginGroup(L"MyGroupąą");
         f.value(L"Jakąś") = L"Kóźnia";
@@ -20,13 +28,16 @@ int main()
         f[L"AnotherGroup"][L"Value2"] = L"36";
         // Add multiple values in different groups
         f.add({{L"first.val1", L"42"}, {L"second.val2", L"33.12"}});
-        // Disable auto flush on scope exit
+        // Disable auto flush on scope exit, can be done if handler is not
+        // set but rather used as read/write argument
         // f.setWriteOnClose(false);
     }
 #endif
     {
+        // Handle read/write operations for a file interface
+        // inifile::FileIOHandler<char> handler(std::filesystem::path("file.conf"), inifile::FlowDirection::Out);
         // inifile::file<char>
-        inifile::file<char> f(std::filesystem::path("file.conf"));
+        inifile::file<char> f(&handler);
         // Add value to group
         f.beginGroup("MyGroupąą");
         f.value("Jakąś") = "Kóźnia";
@@ -38,14 +49,19 @@ int main()
         f["AnotherGroup"]["Value2"] = "36";
         // Add multiple values in different groups
         f.add({{"first.val1", "42"}, {"second.val2", "33.12"}});
-        // Disable auto flush on scope exit
+        // Disable auto flush on scope exit, can be done if handler is not
+        // set but rather used as read/write argument
         // f.setWriteOnClose(false);
     }
     {
+        // Handle read/write operations and pass them to file
+        // inifile::FileIOHandler<char> handler(std::filesystem::path("file.conf"), inifile::FlowDirection::In);
         // inifile::file<char>
-        inifile::file f(std::filesystem::path("file.conf"));
-        // explicit load
-        assert(f.read());
+        // This is in memory handler so reopen will change mode and reset internal data pointer
+        handler.reopen(inifile::FlowDirection::In);
+        inifile::file f;
+        // explicit load using custom handler
+        assert(f.read(&handler));
         // Value in group
         assert(f.value("AnotherGroup.Value1") == "33");
         // Check group
