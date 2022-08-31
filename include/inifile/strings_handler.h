@@ -53,7 +53,7 @@ struct StringsIOHandler : public inifile::IOHandler<CharType>
     {
         return _current == _data.end();
     }
-    using Container = std::vector<std::string>;
+    using Container = std::vector<typename Base::StrType>;
     Container _data;
     Container::iterator _current;
     FlowDirection _direction = FlowDirection::In;
