@@ -139,7 +139,7 @@ typename file<CharT>::StrType& file<CharT>::value(StrViewType str)
 template <typename CharT>
 typename file<CharT>::StrType file<CharT>::key(const StrType& group, const StrType& name) const
 {
-    return group + "." + name;
+    return group + CharType('.') + name;
 }
 
 template <typename CharT>
