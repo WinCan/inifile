@@ -137,6 +137,12 @@ typename file<CharT>::StrType& file<CharT>::value(StrViewType str)
 }
 
 template <typename CharT>
+typename file<CharT>::StrType file<CharT>::key(const StrType& group, const StrType& name) const
+{
+    return group + "." + name;
+}
+
+template <typename CharT>
 void file<CharT>::beginGroup(StrViewType str)
 {
     _currentGroup = str;
@@ -146,6 +152,12 @@ template <typename CharT>
 void file<CharT>::endGroup()
 {
     _currentGroup.clear();
+}
+
+template<typename CharT>
+typename file<CharT>::StrType file<CharT>::currentGroup() const
+{
+    return _currentGroup;
 }
 
 template <typename CharT>

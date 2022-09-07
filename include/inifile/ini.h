@@ -63,9 +63,11 @@ public:
     Values& values();
     const StrType& value(StrViewType str) const;
     StrType& value(StrViewType str);
+    StrType key(const StrType& group, const StrType& name) const;
 
     void beginGroup(StrViewType str);
     void endGroup();
+    StrType currentGroup() const;
 
     bool read(IOHandler<CharType>* handler = nullptr);
     bool write(IOHandler<CharType>* handler = nullptr);
