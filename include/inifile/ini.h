@@ -5,6 +5,11 @@
 #include <vector>
 
 namespace inifile {
+enum class FlowDirection{
+    In,
+    Out,
+};
+
 template <typename CharType>
 struct IOHandler
 {
@@ -12,6 +17,9 @@ struct IOHandler
     typedef typename std::basic_string_view<CharType> StrViewType;
     virtual bool read_line(StrType& line) = 0;
     virtual bool write_line(StrViewType line) = 0;
+    virtual bool open_device(FlowDirection open_mode = FlowDirection::In) = 0;
+    virtual bool close_device() = 0;
+    virtual bool is_opened(FlowDirection open_mode) = 0;
     virtual ~IOHandler() = default;
 };
 
@@ -21,11 +29,6 @@ enum class ValueType
     Comment,
     Value,
     Unknown
-};
-
-enum class FlowDirection{
-    In,
-    Out,
 };
 
 template <typename StrViewType>

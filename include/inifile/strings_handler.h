@@ -40,6 +40,26 @@ struct StringsIOHandler : public inifile::IOHandler<CharType>
         return true;
     }
 
+    bool open_device(FlowDirection open_mode = FlowDirection::In) override
+    {
+        if (_direction != open_mode)
+        {
+            _direction = open_mode;
+            _current = _data.begin();
+        }
+        return true;
+    }
+
+    bool close_device() override
+    {
+        return true;
+    }
+
+    bool is_opened(FlowDirection open_mode) override
+    {
+        return _direction == open_mode;
+    }
+
     void reopen(FlowDirection direction)
     {
         // Consistent with FILE interface
@@ -55,7 +75,7 @@ struct StringsIOHandler : public inifile::IOHandler<CharType>
     }
     using Container = std::vector<typename Base::StrType>;
     Container _data;
-    Container::iterator _current;
+    typename Container::iterator _current;
     FlowDirection _direction = FlowDirection::In;
 };
 } // namespace inifile
