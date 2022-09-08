@@ -154,7 +154,7 @@ void file<CharT>::endGroup()
     _currentGroup.clear();
 }
 
-template<typename CharT>
+template <typename CharT>
 typename file<CharT>::StrType file<CharT>::currentGroup() const
 {
     return _currentGroup;
@@ -189,6 +189,9 @@ bool file<CharT>::read(IOHandler<CharType>* handler)
     if (handler == nullptr)
         handler = _handler;
 
+    if (!handler->is_opened(FlowDirection::In) && !handler->open_device(FlowDirection::In))
+        return false;
+
     StrType line;
     Values* vals = nullptr;
     while (handler->read_line(line))
@@ -208,6 +211,7 @@ bool file<CharT>::read(IOHandler<CharType>* handler)
 
         (*vals)[view_to_string(keyVal.key)] = view_to_string(keyVal.value);
     }
+    handler->close_device();
     return true;
 }
 
@@ -229,23 +233,34 @@ bool file<CharT>::write(IOHandler<CharType>* handler)
         return false;
     if (handler == nullptr)
         handler = _handler;
+    // TODO replace by resource guard
+    if (!handler->is_opened(FlowDirection::Out) && !handler->open_device(FlowDirection::Out))
+        return false;
 
+    bool streamOK = true;
     std::basic_ostringstream<CharType> stream;
     if constexpr (!std::is_same_v<CharType, char>)
         stream.imbue(std::locale(std::locale::classic(), new std::codecvt_utf8<CharType>));
     for (auto gIt = _structure.cbegin(); gIt != _structure.cend(); ++gIt)
     {
         stream << '[' << gIt->first << ']';
-        if(!handler->write_line(get_string(stream)))
-            return false;
+        if (!handler->write_line(get_string(stream)))
+        {
+            streamOK = false;
+            break;
+        }
         for (auto vIt = gIt->second.cbegin(); vIt != gIt->second.cend(); ++vIt)
         {
             stream << vIt->first << '=' << vIt->second;
-            if(!handler->write_line(get_string(stream)))
-                return false;
+            if (!handler->write_line(get_string(stream)))
+            {
+                streamOK = false;
+                break;
+            }
         }
     }
-    return true;
+    handler->close_device();
+    return streamOK;
 }
 
 template <typename CharT>
