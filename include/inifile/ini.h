@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <inifile/inifile_export.h>
+
 namespace inifile {
 enum class FlowDirection{
     In,
@@ -40,7 +42,7 @@ struct ParsedValue
 };
 
 template <typename CharT = char>
-class file
+class INIFILE_API file
 {
     using CharType = CharT;
     using StrType = std::basic_string<CharType>;

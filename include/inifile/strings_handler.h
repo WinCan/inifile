@@ -5,9 +5,11 @@
 #include <string>
 #include <vector>
 
+#include <inifile/inifile_export.h>
+
 namespace inifile {
 template <typename CharType>
-struct StringsIOHandler : public inifile::IOHandler<CharType>
+struct INIFILE_API StringsIOHandler : public inifile::IOHandler<CharType>
 {
     using Base = inifile::IOHandler<CharType>;
     explicit StringsIOHandler(int64_t alloc_size = 128, FlowDirection direction = FlowDirection::In)

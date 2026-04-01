@@ -5,9 +5,11 @@
 #include <filesystem>
 #include <fstream>
 
+#include <inifile/inifile_export.h>
+
 namespace inifile {
 template <typename CharType>
-struct FileIOHandler : public inifile::IOHandler<CharType>
+struct INIFILE_API FileIOHandler : public inifile::IOHandler<CharType>
 {
     using Base = inifile::IOHandler<CharType>;
     explicit FileIOHandler(const std::filesystem::path& path, FlowDirection direction = FlowDirection::In)
